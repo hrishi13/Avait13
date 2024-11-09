@@ -1,0 +1,519 @@
+1. Credit card (classifiction)
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+import warnings 
+warnings.filterwarnings('ignore')
+
+data = pd.read_csv('creditcard.csv')
+data
+
+data.head()
+data.duplicated().sum()
+data.shape
+
+# Define a function to create a scatter plot of our data and labels
+def plot_data(X, y):
+    plt.scatter(X[y == 0, 0], X[y == 0, 1], label="Class #0", alpha=0.5, linewidth=0.15)
+    plt.scatter(X[y == 1, 0], X[y == 1, 1], label="Class #1", alpha=0.5, linewidth=0.15, c='r')
+    plt.legend()
+    return plt.show()
+
+
+def prep_data(data):
+    X=data.iloc[:, :-1]
+    y=data.iloc[:, -1]
+    return X,y
+
+X ,y = prep_data(data)
+plot_data(X.values, y.values)
+
+
+#data explore
+fig, ax = plt.subplots(1, 2, figsize=(18,4))
+
+amount_val = data['Amount'].values
+time_val = data['Time'].values
+
+sns.distplot(amount_val, ax=ax[0], color='r')
+ax[0].set_title('Distribution of Transaction Amount', fontsize=14)
+ax[0].set_xlim([min(amount_val), max(amount_val)])
+
+sns.distplot(time_val, ax=ax[1], color='b')
+ax[1].set_title('Distribution of Transaction Time', fontsize=14)
+ax[1].set_xlim([min(time_val), max(time_val)])
+
+plt.show()
+
+x=data.iloc[:,:-1].values
+print(x)
+
+y=data.iloc[:,-1].values
+print(y)
+
+#spliting Dataset in x,y
+from sklearn.model_selection import train_test_split
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=1/3,random_state=0)
+print(x_train)
+
+print(y_train)
+print(x_test)
+
+print(y_test)
+
+from sklearn.preprocessing import StandardScaler
+sc=StandardScaler()
+x_train=sc.fit_transform(x_train)
+x_test=sc.transform(x_test)
+print(x_train)
+
+print(x_test)
+
+#training logistic regression
+from sklearn.linear_model import LogisticRegression
+classifier=LogisticRegression(random_state=0)
+classifier.fit(x_train,y_train)
+
+log_reg = LogisticRegression(max_iter=1000, random_state=42)
+log_reg.fit(x_train,y_train)
+
+#Predicting the TEST set
+y_pred = classifier.predict(x_test)
+print(np.concatenate((y_pred.reshape(len(y_pred),1), y_test.reshape(len(y_test),1)),1))
+
+# Making the Confusion Matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
+cm = confusion_matrix(y_test, y_pred)
+print(cm)
+accuracy_score(y_test, y_pred)
+
+
+
+
+
+
+
+2. #Import necessary libraries
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+#plotly has been used for visualization
+import plotly as py
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+from plotly.offline import init_notebook_mode, iplot, plot
+import plotly.express as px
+
+ 
+import warnings    
+warnings.filterwarnings("ignore")  
+
+# Import customer dataset
+data= pd.read_csv('CC_data.csv')
+df=pd.DataFrame(data)
+df
+
+df.describe()
+
+df_overview = []
+columns = df . columns . drop("CUST_ID")
+for i in columns : 
+    types = df[i] . dtypes
+    unique_data = df[i] . nunique()
+                   
+    missing_count=df[i].isnull().sum() 
+    value_count= df[i].isnull().count() 
+    missing_percentage= round(missing_count/value_count*100,2)
+        
+    duplicated= df.duplicated().sum()    
+    df_overview . append ([i , types , unique_data , missing_count, missing_percentage,duplicated])
+        
+df_info = pd . DataFrame (df_overview)
+df_info . columns =['name of column' , 'types' ,'unique_data' , 'missing value', "missing percentage","duplicated"]
+
+df_info.style.highlight_max(color = 'aqua', axis = 0)
+
+
+
+
+#finding outliers base on the Inter Quantile Range(IQR)
+
+Q1 = df.quantile(0.25)
+Q3 = df.quantile(0.75)
+IQR = Q3 - Q1
+
+count_out = df[(df <  (Q1 - 1.5 * IQR)) | (df > (Q3 + 1.5 * IQR))].count()
+
+
+df_count_out = pd.DataFrame(count_out, columns=['count_out'])
+df_count_out
+
+x=df.iloc[:,:-1].values
+y=df.iloc[:,-1].values
+
+print(x)
+print(y)
+
+# Splitting the dataset into the Training set and Test set
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.25, random_state = 0)
+print(x_train)
+
+print(y_train)
+print(x_test)
+print(y_test)
+
+
+#Using ELBOW mthod to find the Optimal no. of Clustering
+from sklearn.cluster import KMeans
+wcss = []
+
+
+def plot_boxplots_alternative(df):
+    num_columns = df.select_dtypes(include='number').columns
+    num_features = len(num_columns)
+    rows = (num_features // 3) + 1
+    cols = min(num_features, 3)
+    fig, axes = plt.subplots(rows, cols, figsize=(20, rows * 6))
+    axes = axes.flatten()  # Flatten in case of more subplots
+    
+    for i, col in enumerate(num_columns):
+        axes[i].boxplot(df[col], vert=False, patch_artist=True,
+                        boxprops=dict(facecolor='lightblue', color='navy'),
+                        medianprops=dict(color='red'))
+        axes[i].set_title(f'Boxplot of {col}', fontsize=14)
+        axes[i].set_xlabel(col)
+
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+    
+    plt.tight_layout()
+    plt.show()
+
+plot_boxplots_alternative(df)
+
+plt.figure(figsize=(20,20))
+sns.scatterplot(data = df)
+
+ax = sns.countplot(data=df, x='TENURE' , color = "blue")
+ax.set_xticklabels(ax.get_xticklabels(), rotation=90, ha="right")
+plt.show()
+
+plt.figure(figsize=(20,35))
+for i, col in enumerate(df.columns):
+    if df[col].dtype != 'object':
+        ax = plt.subplot(9, 2, i+1)
+        sns.kdeplot(df[col], ax=ax)
+        plt.xlabel(col)
+        
+plt.show()
+
+# missing values in 'CREDIT_LIMIT' column(this column has one missing value)
+nulls_value = pd.isnull(df["CREDIT_LIMIT"])
+df[nulls_value]
+
+df.drop([5203], axis=0, inplace=True)
+df.reset_index( inplace = True)
+df.drop('index',axis=1,inplace = True)
+df
+
+minpay = df['MINIMUM_PAYMENTS'].copy() # make a copy of MINIMUM_PAYMENTS
+payments_mean = np.mean(df['PAYMENTS']) # take the mean value of PAYMENTS
+
+i = 0
+for payments, minpayments in zip(df['PAYMENTS'], df['MINIMUM_PAYMENTS'].isna()):
+    if (payments == 0) and (minpayments == True):
+        minpay[i] = 0
+    elif (0 < payments < payments_mean) and (minpayments == True): 
+        minpay[i] = payments
+    elif minpayments == True: 
+
+        minpay[i] = payments_mean
+    i += 1
+    
+print(f'Missing (before): {df.isna().sum().sum()}')
+print(f'Missing (after): {minpay.isna().sum().sum()}')
+
+df['MINIMUM_PAYMENTS'] = minpay.copy()
+
+
+ #Dropping some of outliers 
+df = df[(df['BALANCE']<15000)]
+df = df[(df['PURCHASES']<40000)]
+df = df[(df['ONEOFF_PURCHASES']<30000)]
+df = df[(df['INSTALLMENTS_PURCHASES']<20000)]
+df = df[(df['CASH_ADVANCE']<40000)]
+df = df[(df['MINIMUM_PAYMENTS']<60000)]
+
+df.reset_index(inplace=True)
+df.drop('index',axis=1,inplace = True)
+df
+
+
+#Dividing the density distribution diagram into specific sections
+
+n_columns=["BALANCE","PURCHASES","ONEOFF_PURCHASES","INSTALLMENTS_PURCHASES","CASH_ADVANCE","CASH_ADVANCE_TRX",
+          "PURCHASES_TRX","CREDIT_LIMIT","PAYMENTS","MINIMUM_PAYMENTS","TENURE"]
+
+for i in n_columns:
+    plt.figure(figsize=(14, 8))
+
+    # Plot density curve 
+    sns.kdeplot(df[i], linewidth=2, fill=True)
+    ax = sns.kdeplot(df[i])
+
+    # Get all the lines used to draw density curve 
+    kde_lines = ax.get_lines()[-1]
+    kde_a, kde_b = kde_lines.get_data()
+    kde_c, kde_d = kde_lines.get_data()
+    kde_e, kde_f = kde_lines.get_data()
+    kde_g, kde_h = kde_lines.get_data()
+
+   # Filter 
+    mask1 = (kde_a >= df[i].min()) & (kde_a <((df[i].max()-df[i].min())/4)+df[i].min())
+    mask2= (kde_c >= ((df[i].max()-df[i].min())/4)+df[i].min()) & (kde_c <(((df[i].max()-df[i].min())/4)*2)+df[i].min())
+    mask3= (kde_e >= (((df[i].max()-df[i].min())/4)*2)+df[i].min()) & (kde_e < (((df[i].max()-df[i].min())/4)*3)+df[i].min())
+    mask4= (kde_g >= (((df[i].max()-df[i].min())/4)*3)+df[i].min()) & (kde_g <df[i].max())
+
+    filled_a, filled_b = kde_a[mask1], kde_b[mask1]
+    filled_c, filled_d = kde_c[mask2], kde_d[mask2]
+    filled_e, filled_f = kde_e[mask3], kde_f[mask3]
+    filled_g, filled_h = kde_g[mask4], kde_h[mask4]
+
+    # Shade the partial region 
+
+    ax.fill_between(filled_a, y1=filled_b ,color="crimson")
+    ax.fill_between(filled_c, y1=filled_d,color="dimgray")
+    ax.fill_between(filled_e, y1=filled_f,color="crimson")
+    ax.fill_between(filled_g, y1=filled_h,color= "dimgray")
+
+    # Vertical lines 
+    plt.axvline(x=df[i].min(), linewidth=2, linestyle='--', color="DimGray")
+    plt.axvline(x=((df[i].max()-df[i].min())/4)+df[i].min(), linewidth=2, linestyle='--', color="DimGray")
+    plt.axvline(x=(((df[i].max()-df[i].min())/4)*2)+df[i].min(), linewidth=2, linestyle='--', color="DimGray")
+    plt.axvline(x=(((df[i].max()-df[i].min())/4)*3)+df[i].min(), linewidth=2, linestyle='--', color="DimGray")
+    plt.axvline(x=df[i].max(), linewidth=2, linestyle='--', color="DimGray")
+
+    plt.title(" Data segmentation: " + i, pad=20 , size=20 , color= "navy")
+    plt.xlabel("Total energy(mAh)", labelpad=20 , size=20)
+    plt.ylabel("Probability", labelpad=20 , size=20)
+    
+    ax.spines['bottom'].set_color('blue')
+    ax.spines['top'].set_color('white') 
+    ax.spines['right'].set_color('white')
+    ax.spines['left'].set_linewidth(4)
+    ax.spines['bottom'].set_linewidth(4)
+    ax.spines['left'].set_color('blue')
+    ax.xaxis.label.set_color('navy')
+    ax.yaxis.label.set_color('navy')
+    ax.tick_params(colors="navy", which='both')  # 'both' refers to minor and major axes
+  
+    plt.show()
+
+    area1 = np.trapz(filled_b, filled_a)
+    area2 = np.trapz(filled_d, filled_c)
+    area3 = np.trapz(filled_f, filled_e)
+    area4 = np.trapz(filled_h, filled_g)
+    
+    from colorama import Fore
+  
+    print('\n')
+    print(Fore.BLUE , f"Area Under the cureve of {i} between {df[i].min()} and {round(((df[i].max()-df[i].min())/4)+df[i].min(),1)}: {area1.round(4)}")
+    print(Fore.RED , f"Area Under the cureve of {i} between {round(((df[i].max()-df[i].min())/4)+df[i].min(),1)} and {round((((df[i].max()-df[i].min())/4)*2)+df[i].min(),1)}: {area2.round(4)}")
+    print(Fore.BLUE, f"Area Under the cureve of {i} between {round((((df[i].max()-df[i].min())/4)*2)+df[i].min(),1)} and {round((((df[i].max()-df[i].min())/4)*3)+df[i].min(),1)}: {area3.round(4)}")
+    print(Fore.RED, f"Area Under the cureve of {i} between {round((((df[i].max()-df[i].min())/4)*3)+df[i].min(),1)} and {round(df[i].max(),1)} mAh: {area4.round(4)}")
+    print('\n','\n','\n','\n')
+    
+
+
+
+
+
+import math
+
+df2=pd.DataFrame()
+
+column_name={}
+
+for i in df.columns:
+    
+    column_name= []
+    x= df[i].max() - df[i].min()
+    c= round(x / 5, 2)
+    d= df[i].min()
+    
+    for j in df[i]:
+    
+        if j <= d+c:
+            column_name.append( f" low: {0} _ { round((d+c),2)}" )         
+        if (d+c)< j <= d+(2*c) :
+            column_name.append(f" Moderate: {round((d+c),2)} _ {round(d+(2*c),2) }" )
+        if (d+2*c) < j <= d+3*c:
+            column_name.append(f" High: {round(d+(2*c),2)} _ {round(d+(3*c),2) }"  )  
+        if d+3*c < j <= d+4*c:
+            column_name.append(f" Very High: {round(d+(3*c),2)} _ {round(d+(4*c),2) }")
+        if d+4*c < j <= 1+d+5*c:
+            column_name.append(f" Severe: {round(d+(4*c),2)} _ {round(d+(5*c),2) }")
+    
+    se = pd.Series(column_name)
+    df2[i]= se.values
+    
+df2 = df2.add_suffix('2')
+df2
+
+
+df3=pd.concat([df, df2], axis=1)
+df3
+
+#Normalizing
+from sklearn.preprocessing import StandardScaler
+df_model=df.copy()
+
+scaler= StandardScaler()
+df_Standardize=pd.DataFrame(scaler.fit_transform(df_model), columns = df_model.columns)
+df_Standardize
+
+
+#Kmeans Algorithm
+from sklearn.cluster import KMeans
+
+# Kmeans algorithm settings
+kmeans_set = {"init":"random", "n_init":10, "max_iter":300, "random_state":42}
+# Find inertia for k cluster
+inertias = []
+for k in range(2,11):
+    kmeans = KMeans(n_clusters=k, **kmeans_set)
+    kmeans.fit(df_Standardize)
+    inertias.append(kmeans.inertia_)
+
+
+from kneed import KneeLocator, DataGenerator
+kelbow = KneeLocator(range(2, 11), inertias, curve = 'convex', direction = 'decreasing')
+kelbow.elbow
+
+fig, ax = plt.subplots(facecolor="white",figsize = (10 ,7))
+
+plt.plot(np.arange(2 , 11) , inertias  , alpha = 1,  color='b', marker='.', markersize=30, markerfacecolor='white')
+plt.xlabel('Number of Clusters',fontname="Gabriola",fontsize=22) , plt.ylabel('Inertia',fontname="Gabriola",fontsize=22)
+plt. grid(False)
+
+plt.annotate('Elbow: Optimal number of clusters  ', xy=(4, 98000), xytext=(5, 110000),fontsize=18,fontname="Gabriola",
+             arrowprops=dict(facecolor='black', shrink=0.05),)
+             
+ax.set_facecolor("white")
+
+
+plt.axvline(x=kelbow.elbow, color ='gray', label = 'axvline - full height', ls = '--')
+plt.show()
+
+
+
+
+
+#Evaluation Metrics
+from sklearn.metrics import silhouette_score
+from sklearn.metrics import calinski_harabasz_score
+from sklearn.metrics import davies_bouldin_score
+
+silhouette = []
+for k in range(2,11):
+    kmeans = KMeans(n_clusters=k, **kmeans_set)
+    kmeans.fit(df_Standardize)
+    S_score = silhouette_score(df_Standardize, kmeans.labels_)
+    silhouette.append(S_score)
+
+calinski_harabasz = []
+for k in range(2,11):
+    kmeans = KMeans(n_clusters=k, **kmeans_set)
+    kmeans.fit(df_Standardize)
+    C_score = calinski_harabasz_score(df_Standardize, kmeans.labels_)
+    calinski_harabasz.append(C_score)
+
+davies_bouldin = []
+for k in range(2,11):
+    kmeans = KMeans(n_clusters=k, **kmeans_set)
+    kmeans.fit(df_Standardize)
+    D_score = davies_bouldin_score(df_Standardize, kmeans.labels_)
+    davies_bouldin.append(D_score)
+
+
+
+
+
+
+
+# Silhouette Coefficient
+fig, ax = plt.subplots(2,2,facecolor="white",figsize = (15 ,9))
+
+ax[0][0].plot(np.arange(2 , 11) , inertias  , alpha = 1,  color='b', marker='.', markersize=30, markerfacecolor='white')
+ax[0][1].plot(np.arange(2 , 11) , silhouette,  color='b', marker='.', markersize=30,markerfacecolor='white')
+ax[1][0].plot(np.arange(2 , 11) , calinski_harabasz  , alpha = 1,  color='b', marker='.', markersize=30, markerfacecolor='white')
+ax[1][1].plot(np.arange(2 , 11) , davies_bouldin  , alpha = 1,  color='b', marker='.', markersize=30, markerfacecolor='white')
+
+ax[0][0].set_xlabel('Number of Clusters',fontname="Gabriola",fontsize=22,labelpad=10)
+ax[0][1].set_xlabel('Number of Clusters',fontname="Gabriola",fontsize=22,labelpad=10)
+ax[1][0].set_xlabel('Number of Clusters',fontname="Gabriola",fontsize=22,labelpad=10)
+ax[1][1].set_xlabel('Number of Clusters',fontname="Gabriola",fontsize=22,labelpad=10)
+ 
+ax[0][0].set_ylabel('inertias ',fontname="Gabriola",fontsize=22,labelpad=10)    
+ax[0][1].set_ylabel('silhouette score',fontname="Gabriola",fontsize=22,labelpad=10)
+ax[1][0].set_ylabel('calinski harabasz score',fontname="Gabriola",fontsize=22,labelpad=10)
+ax[1][1].set_ylabel('davies bouldin score',fontname="Gabriola",fontsize=22,labelpad=10)
+
+
+plt. grid(False)
+
+ax[0][0].annotate('Elbow: Optimal number of clusters  ', xy=(4.1, 100000), xytext=(5, 110000),fontsize=18,fontname="Gabriola",
+             arrowprops=dict(facecolor='red', shrink=0.05),)
+
+ax[0][1].annotate('Best score', xy=(3, 0.25), xytext=(5, 0.23),fontsize=18,fontname="Gabriola",
+             arrowprops=dict(facecolor='red', shrink=0.05),)
+
+ax[1][0].annotate('Best score', xy=(2,1700), xytext=(2.2, 1400),fontsize=18,fontname="Gabriola",
+             arrowprops=dict(facecolor='red', shrink=0.05),)
+ax[1][0].annotate('Optimal point according Elbow', xy=(3,1600), xytext=(3.7, 1250),fontsize=18,fontname="Gabriola",
+             arrowprops=dict(facecolor='green', shrink=0.05),)
+
+ax[1][1].annotate('Best score', xy=(7, 1.31), xytext=(7, 1.6),fontsize=18,fontname="Gabriola",
+             arrowprops=dict(facecolor='red', shrink=0.05),)
+ax[1][1].annotate('Optimal point according Elbow', xy=(3.1, 1.61), xytext=(4, 1.75),fontsize=18,fontname="Gabriola",
+             arrowprops=dict(facecolor='green', shrink=0.05),)
+             
+fig.tight_layout(pad=3)
+
+
+
+plt.show()
+
+
+
+#assign optimal cluster to kmeans algoritm
+Kmean_pred = KMeans(n_clusters=3, **kmeans_set )
+Kmean_pred.fit(df_Standardize)
+labels = Kmean_pred.labels_
+#normalize centroids
+centroids = pd.DataFrame(data=Kmean_pred.cluster_centers_ , columns = [df_Standardize.columns])
+#real centroids
+r_centers = scaler.inverse_transform(centroids)
+real_centroids = pd.DataFrame(data = r_centers, columns = [df.columns])
+real_centroids
+
+
+
+
+#PCA
+from sklearn.decomposition import PCA
+pca = PCA(n_components = 2)
+Principal_2 = pca.fit_transform(df_Standardize)
+
+#2D
+pca2 = pd.DataFrame(data = Principal_2, columns = ['pca1', 'pca2'])
+pca2.head()
+
+
+df_pca2 = pd.concat([pca2, pd.DataFrame({'cluster':labels})], axis=1)
+df_pca2.head()
